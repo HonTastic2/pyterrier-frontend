@@ -15,6 +15,7 @@ function App() {
 
   const goBack = () => {
     setShowResult(false);
+    setData(null);
   }
 
   return (
