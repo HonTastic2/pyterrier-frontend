@@ -1,12 +1,16 @@
 import './App.css';
+import axios from 'axios';
 import React, {useState} from 'react';
 
 function App() {
   const [inputText, setInputText] = useState('');
   const [showResult, setShowResult] = useState(false);
+  const [data, setData] = useState(null);
 
   const handleSearch = () => {
-    setShowResult(true);
+    axios.post('http://127.0.0.1:5000/api/data', {"query" : inputText})
+      .then(response => setData(response.data.result), setShowResult(true))
+      .catch(error => console.error("Error fetching data:", error));
   };
 
   const goBack = () => {
@@ -21,8 +25,10 @@ function App() {
       <body className="App-body">
         <div>
           { showResult ? (<>
-          <p>{inputText}</p>
+          {data ? (<>
+          <p>{data}</p>
           <button className="Button" onClick={goBack}>Back</button>
+          </>) : (<><p>Loading...</p></>)}
           </>) : (<>
           <p>Enter article contents:</p>
           <textarea name="inputArticle" value={inputText} onChange={(e) => setInputText(e.target.value)} rows={20} cols={100}/>
