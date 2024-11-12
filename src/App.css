@@ -26,3 +26,13 @@
   margin: 10px;
   cursor: pointer;
 }
+
+.URL-button {
+  background-color: #3968c8;
+  color: white;
+  border: none;
+  border-radius: 1px;
+  padding: 2px 3px;
+  margin: 10px;
+  cursor: pointer;
+}

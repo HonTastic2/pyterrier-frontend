@@ -10,6 +10,7 @@ dataset = ir_datasets.load('wapo/v2/trec-news-2019')
 if not pt.java.started():
     pt.java.init()
 
+# Convert found document to dictionary, if both fields are present
 def doc_to_dict(doc):
     if not doc.title or not doc.body:
         return None
@@ -18,7 +19,7 @@ def doc_to_dict(doc):
         'text': f"{doc.title}\n{doc.body}"
     }
 
-
+# Check if index exists, if not create one
 index_path = '/app/index_path'
 if os.path.exists(index_path):
     index = pt.IndexFactory.of(index_path)
@@ -33,9 +34,11 @@ BM25 = pt.BatchRetrieve(index, wmodel='BM25')
 
 def search_top_10(query_text, retriever):
     result = []
+    # Create query as a dataframe and get top 10 results
     query_df = pd.DataFrame([{"qid": "1", "query": query_text}])
     results = retriever.transform(query_df).head(10)
     
+    # Format results
     for i, row in results.iterrows():
         doc = dataset.docs_store().get(row['docno'])
         result.append([i+1, doc.title, doc.url])

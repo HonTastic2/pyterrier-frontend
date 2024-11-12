@@ -2,17 +2,25 @@ import './App.css';
 import axios from 'axios';
 import React, {useState} from 'react';
 
+function copyURL(event) {
+  var buttonId = event.target.id;
+  var copyText = document.getElementById(buttonId.slice(0, -6));
+  navigator.clipboard.writeText(copyText.href);
+}
+
 function App() {
   const [inputText, setInputText] = useState('');
   const [showResult, setShowResult] = useState(false);
   const [data, setData] = useState(null);
 
+  // Send input text to backend server and find most relevant articles
   const handleSearch = () => {
     axios.post('http://127.0.0.1:5000/api/data', {"query" : inputText})
       .then(response => setData(response.data.result), setShowResult(true))
       .catch(error => console.error("Error fetching data:", error));
   };
 
+  // Go back to the input page
   const goBack = () => {
     setShowResult(false);
     setData(null);
@@ -25,10 +33,13 @@ function App() {
       </header>
       <body className="App-body">
         <div>
+          {/* Display the search result or the input page */}
           { showResult ? (<>
           {data ? (<>
-          {data.map((list, index) => (
-            <p key={index}>Rank {list[0]}: <a href={list[2]}>{list[1]}</a></p>
+          {/* Go through returned data list, iterate through each article and then display them */}
+          {data.map((article, i) => (
+            <p key={i}>Rank {article[0]}: <a id={i} href={article[2]}>{article[1]}</a>
+            <button id={i + "Button"} className="URL-button" onClick={(event) => copyURL(event)}>Copy URL</button></p>
           ))}
           <button className="Button" onClick={goBack}>Back</button>
           </>) : (<><p>Loading...</p></>)}
