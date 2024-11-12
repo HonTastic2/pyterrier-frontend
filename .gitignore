@@ -2,6 +2,8 @@
 
 # dependencies
 /node_modules
+/WashingtonPost.v2
+/ir_datasets
 /.pnp
 .pnp.js
 
@@ -18,6 +20,8 @@
 .env.test.local
 .env.production.local
 
+
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+

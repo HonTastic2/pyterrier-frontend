@@ -3,10 +3,12 @@ from flask_cors import CORS
 import pyterrier as pt
 import pandas as pd
 import ir_datasets
+import shutil
+import os
 dataset = ir_datasets.load('wapo/v2/trec-news-2019')
 
-if not pt.started():
-    pt.init()
+if not pt.java.started():
+    pt.java.init()
 
 def doc_to_dict(doc):
     if not doc.title or not doc.body:
@@ -16,7 +18,14 @@ def doc_to_dict(doc):
         'text': f"{doc.title}\n{doc.body}"
     }
 
-index = pt.IndexFactory.of('./index_path')
+
+index_path = '/app/index_path'
+if os.path.exists(index_path):
+    index = pt.IndexFactory.of(index_path)
+else:
+    indexer = pt.IterDictIndexer(index_path, meta={'docno': 36}, verbose=True)
+    index_ref = indexer.index((d for d in (doc_to_dict(doc) for doc in dataset.docs_iter()) if d))
+    index = pt.IndexFactory.of(index_ref)
 
 print(f"Indexed {index.getCollectionStatistics().getNumberOfDocuments()} documents")
 
@@ -44,4 +53,4 @@ def post_data():
     return jsonify({"result": result}), 201
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", debug=True)
