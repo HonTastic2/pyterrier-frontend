@@ -27,7 +27,9 @@ function App() {
         <div>
           { showResult ? (<>
           {data ? (<>
-          <p>{data}</p>
+          {data.map((list, index) => (
+            <p key={index}>Rank {list[0]}: <a href={list[2]}>{list[1]}</a></p>
+          ))}
           <button className="Button" onClick={goBack}>Back</button>
           </>) : (<><p>Loading...</p></>)}
           </>) : (<>

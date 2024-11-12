@@ -32,13 +32,13 @@ print(f"Indexed {index.getCollectionStatistics().getNumberOfDocuments()} documen
 BM25 = pt.BatchRetrieve(index, wmodel='BM25')
 
 def search_top_10(query_text, retriever):
-    result = ""
+    result = []
     query_df = pd.DataFrame([{"qid": "1", "query": query_text}])
     results = retriever.transform(query_df).head(10)
     
     for i, row in results.iterrows():
         doc = dataset.docs_store().get(row['docno'])
-        result += f"Rank: {i+1}, Title: {doc.title}, URL: {doc.url} \n"
+        result.append([i+1, doc.title, doc.url])
 
     return result
 
