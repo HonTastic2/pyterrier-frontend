@@ -1,7 +1,7 @@
-from flask import Flask, jsonify, request
-from flask_cors import CORS
-import pyterrier as pt
-import pandas as pd
+from flask import Flask, jsonify, request # type: ignore
+from flask_cors import CORS # type: ignore
+import pyterrier as pt # type: ignore
+import pandas as pd # type: ignore
 import ir_datasets
 import shutil
 import os

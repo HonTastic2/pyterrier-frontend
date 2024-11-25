@@ -10,11 +10,30 @@ function copyURL(event) {
   navigator.clipboard.writeText(copyText.href);
 }
 
+// Get user highlighted text to add a link to
+function getSelectionText() {
+  let text = "";
+
+  if (window.getSelection) {
+      text = window.getSelection().toString();
+  } else if (document.selection && document.selection.type !== "Control") {
+      text = document.selection.createRange().text;
+  }
+
+  return text;
+}
+
 function App() {
   const [inputText, setInputText] = useState("");
   const [showResult, setShowResult] = useState(false);
   const [numResults, setNumResults] = useState(5);
   const [data, setData] = useState(null);
+  const [selectedText, setSelectedText] = useState("");
+
+  const handleSelection = () => {
+    const text = getSelectionText();
+    setSelectedText(text);
+  };
 
   // Send input text to backend server and find most relevant articles
   const handleSearch = () => {
@@ -45,10 +64,15 @@ function App() {
                   <br />
                   <Tabs>
                     <TabList>
+                      <Tab>Input Document</Tab>
                       <Tab>Table</Tab>
                       <Tab>Text info</Tab>
                     </TabList>
 
+                    <TabPanel>
+                      <p onMouseUp={handleSelection}>{inputText}</p>
+                      <p>Selected text: {selectedText}</p>
+                    </TabPanel>
                     {/* Go through returned data list, iterate through each article and then display them */}
                     <TabPanel>
                       <table className="ResultTable">
