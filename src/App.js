@@ -1,8 +1,11 @@
 import "./App.css";
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import "react-tabs/style/react-tabs.css";
+import Quill from "quill";
+import "quill/dist/quill.snow.css";
+
 
 function copyURL(event) {
   var buttonId = event.target.id;
@@ -29,6 +32,7 @@ function App() {
   const [numResults, setNumResults] = useState(5);
   const [data, setData] = useState(null);
   const [selectedText, setSelectedText] = useState("");
+  const quillRef = useRef(null);
 
   const handleSelection = () => {
     const text = getSelectionText();
@@ -47,6 +51,31 @@ function App() {
   const goBack = () => {
     setShowResult(false);
     setData(null);
+    quillRef.current = null;
+  };
+
+  useEffect(() => {
+    if (!quillRef.current && showResult) {
+      quillRef.current = new Quill("#editor", {
+        modules: {
+          toolbar: false,
+        },
+        theme: "snow",
+      });
+      
+      quillRef.current.root.innetHTML = inputText;
+    }
+  }, [inputText, showResult]);
+
+  // Handle making the selected text a link
+  const linkSelectedText = () => {
+    const quill = quillRef.current;
+    const range = quill.getSelection();
+    if (range && range.length > 0) {
+      quill.formatText(range.index, range.length, "link", "https://www.google.com");
+    } else {
+      alert("Please select text to link.");
+    }
   };
 
   return (
@@ -72,6 +101,8 @@ function App() {
                     <TabPanel>
                       <p onMouseUp={handleSelection}>{inputText}</p>
                       <p>Selected text: {selectedText}</p>
+                      <div id="editor"></div>
+                      <button className="Button" onClick={linkSelectedText}>Links</button>
                     </TabPanel>
                     {/* Go through returned data list, iterate through each article and then display them */}
                     <TabPanel>
@@ -137,7 +168,8 @@ function App() {
                 Number of results:{" "}
                 <select
                   value={numResults}
-                  onChange={(e) => setNumResults(parseInt(e.target.value))}>
+                  onChange={(e) => setNumResults(parseInt(e.target.value))}
+                >
                   <option value={1}>1</option>
                   <option value={2}>2</option>
                   <option value={3}>3</option>
