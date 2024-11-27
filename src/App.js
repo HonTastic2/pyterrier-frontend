@@ -51,7 +51,7 @@ function App() {
   const goBack = () => {
     setShowResult(false);
     setData(null);
-    quillRef.current = null;
+    quillRef.current.disable();
   };
 
   useEffect(() => {
@@ -63,16 +63,18 @@ function App() {
         theme: "snow",
       });
       
-      quillRef.current.root.innetHTML = inputText;
+      quillRef.current.root.innerHTML = inputText;
     }
   }, [inputText, showResult]);
 
   // Handle making the selected text a link
-  const linkSelectedText = () => {
+  const linkSelectedText = (event) => {
     const quill = quillRef.current;
     const range = quill.getSelection();
+    var buttonId = event.target.id;
+    var copyText = document.getElementById(buttonId.slice(0, -6));
     if (range && range.length > 0) {
-      quill.formatText(range.index, range.length, "link", "https://www.google.com");
+      quill.formatText(range.index, range.length, "link", copyText.href);
     } else {
       alert("Please select text to link.");
     }
@@ -102,7 +104,7 @@ function App() {
                       <p onMouseUp={handleSelection}>{inputText}</p>
                       <p>Selected text: {selectedText}</p>
                       <div id="editor"></div>
-                      <button className="Button" onClick={linkSelectedText}>Links</button>
+                      {/* <button className="Button" onClick={linkSelectedText}>Links</button> */}
                     </TabPanel>
                     {/* Go through returned data list, iterate through each article and then display them */}
                     <TabPanel>
@@ -130,6 +132,13 @@ function App() {
                                   onClick={(event) => copyURL(event)}
                                 >
                                   Copy URL
+                                </button>
+                                <button
+                                  id={i + "Button"}
+                                  className="URL-button"
+                                  onClick={(event) => linkSelectedText(event)}
+                                >
+                                  Link to Selected Text
                                 </button>
                               </td>
                             </tr>
