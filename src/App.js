@@ -18,9 +18,9 @@ function getSelectionText() {
   let text = "";
 
   if (window.getSelection) {
-      text = window.getSelection().toString();
+    text = window.getSelection().toString();
   } else if (document.selection && document.selection.type !== "Control") {
-      text = document.selection.createRange().text;
+    text = document.selection.createRange().text;
   }
 
   return text;
@@ -32,7 +32,14 @@ function App() {
   const [numResults, setNumResults] = useState(5);
   const [data, setData] = useState(null);
   const [selectedText, setSelectedText] = useState("");
+  // const [editorReady, setEditorReady] = useState(false);
+  // const editorRef = useRef(null);
   const quillRef = useRef(null);
+  const [activeTab, setActiveTab] = useState(null);
+
+  const handleTabSelect = (i) => {
+    setActiveTab(i);
+  };
 
   const handleSelection = () => {
     const text = getSelectionText();
@@ -42,30 +49,55 @@ function App() {
   // Send input text to backend server and find most relevant articles
   const handleSearch = () => {
     axios
-      .post("http://127.0.0.1:5000/api/data", {query: inputText, num_results: numResults,})
+      .post("http://127.0.0.1:5000/api/data", { query: inputText, num_results: numResults, })
       .then((response) => setData(response.data.result), setShowResult(true))
       .catch((error) => console.error("Error fetching data:", error));
+
+    // setEditorReady(true);
+    setActiveTab(0);
   };
 
   // Go back to the input page
   const goBack = () => {
     setShowResult(false);
     setData(null);
-    quillRef.current.disable();
+    setActiveTab(null);
+    // setEditorReady(false);
+    if (quillRef.current) {
+      quillRef.current = null;
+    }
   };
 
-  useEffect(() => {
-    if (!quillRef.current && showResult) {
-      quillRef.current = new Quill("#editor", {
-        modules: {
-          toolbar: false,
-        },
-        theme: "snow",
-      });
-      
-      quillRef.current.root.innerHTML = inputText;
+  useLayoutEffect(() => {
+    // Initialize Quill only when the editor tab is active
+    if (activeTab === 1 && !quillRef.current) {
+      const editorElement = document.getElementById("editor");
+      if (editorElement) {
+          if (!quillRef.current) {
+            quillRef.current = new Quill(editorElement, {
+              modules: { toolbar: false },
+              theme: "snow",
+            });
+            quillRef.current.setText(inputText); // Initialize with text
+          }
+      }
     }
-  }, [inputText, showResult]);
+  }, [activeTab, inputText]);
+
+  useEffect(() => {
+    if (activeTab === 1 && quillRef.current) {
+      setTimeout(() => {
+        quillRef.current.root.parentNode.style.height = "auto"; // Adjust container height
+        quillRef.current.root.parentNode.style.width = "90%"; // Adjust container width
+      }, 0);
+    }
+  }, [activeTab]);
+
+
+  // useEffect(() => {
+  //   console.log("EditorRef:", editorRef.current); // This should not be null when showResult is true
+  // }, [editorRef.current]);
+
 
   // Handle making the selected text a link
   const linkSelectedText = (event) => {
@@ -80,6 +112,11 @@ function App() {
     }
   };
 
+  const resetLinks = () => {
+    const quill = quillRef.current;
+    quill.format("link", false);
+  }
+
   return (
     <div className="App">
       <header className="App-header">
@@ -88,114 +125,110 @@ function App() {
       <body className="App-body">
         <div>
           {/* Display the search result or the input page */}
-          {showResult ? (
-            <>
-              {data ? (
-                <>
-                  <br />
-                  <Tabs>
-                    <TabList>
-                      <Tab>Input Document</Tab>
-                      <Tab>Table</Tab>
-                      <Tab>Text info</Tab>
-                    </TabList>
-
-                    <TabPanel>
-                      <p onMouseUp={handleSelection}>{inputText}</p>
-                      <p>Selected text: {selectedText}</p>
-                      <div id="editor"></div>
-                      {/* <button className="Button" onClick={linkSelectedText}>Links</button> */}
-                    </TabPanel>
-                    {/* Go through returned data list, iterate through each article and then display them */}
-                    <TabPanel>
-                      <table className="ResultTable">
-                        <thead>
-                          <tr>
-                            <th>Rank</th>
-                            <th>Title/URL</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {data.map((article, i) => (
-                            <tr key={i}>
-                              <td>{article[0]}</td>
-                              <td>
-                                <a id={i} href={article[2]}>
-                                  {article[1]}
-                                </a>
-                              </td>
-                              <td>
-                                <button
-                                  id={i + "Button"}
-                                  className="URL-button"
-                                  onClick={(event) => copyURL(event)}
-                                >
-                                  Copy URL
-                                </button>
-                                <button
-                                  id={i + "Button"}
-                                  className="URL-button"
-                                  onClick={(event) => linkSelectedText(event)}
-                                >
-                                  Link to Selected Text
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </TabPanel>
-                    <TabPanel>
-                      <h2>Any content 2</h2>
-                    </TabPanel>
-                  </Tabs>
-
-                  <button className="Button" onClick={goBack}>
-                    Back
-                  </button>
-                </>
-              ) : (
-                <>
-                  <p>Loading...</p>
-                </>
-              )}
-            </>
-          ) : (
-            <>
-              <p>Enter article contents:</p>
-              <textarea
-                name="inputArticle"
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                rows={20}
-                cols={100}
-                style={{ borderRadius: "5px" }}
-              />
+          {showResult ? (<>
+            {data ? (<>
               <br />
-              <p>
-                Number of results:{" "}
-                <select
-                  value={numResults}
-                  onChange={(e) => setNumResults(parseInt(e.target.value))}
-                >
-                  <option value={1}>1</option>
-                  <option value={2}>2</option>
-                  <option value={3}>3</option>
-                  <option value={4}>4</option>
-                  <option value={5}>5</option>
-                  <option value={6}>6</option>
-                  <option value={7}>7</option>
-                  <option value={8}>8</option>
-                  <option value={9}>9</option>
-                  <option value={10}>10</option>
-                </select>
-                <button className="Button" onClick={handleSearch}>
-                  Search
-                </button>
-              </p>
-            </>
-          )}
+              <Tabs onSelect={(i) => handleTabSelect(i)} forceRenderTabPanel>
+                <TabList>
+                  <Tab>Input Document</Tab>
+                  <Tab>Table/Link Articles</Tab>
+                </TabList>
+
+                <TabPanel>
+                  <p onMouseUp={handleSelection}>{inputText}</p>
+                  <p>Selected text: {selectedText}</p>
+                  {/* <button className="Button" onClick={linkSelectedText}>Links</button> */}
+                  <button className="Button" onClick={goBack}>Back</button>
+                </TabPanel>
+
+                {/* Go through returned data list, iterate through each article and then display them */}
+                <TabPanel>
+                  <table className="ResultTable">
+                    <thead>
+                      <tr>
+                        <th>Rank</th>
+                        <th>Title/URL</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.map((article, i) => (
+                        <tr key={i}>
+                          <td>{article[0]}</td>
+                          <td>
+                            <a id={i} href={article[2]}>
+                              {article[1]}
+                            </a>
+                          </td>
+                          <td>
+                            <button
+                              id={i + "Button"}
+                              className="URL-button"
+                              onClick={(event) => copyURL(event)}>
+                              Copy URL
+                            </button>
+                            <button
+                              id={i + "Button"}
+                              className="URL-button"
+                              onClick={(event) => linkSelectedText(event)}>
+                              Link to Selected Text
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <button className="Button" onClick={resetLinks}>Reset Links</button>
+                  <button className="Button" onClick={goBack}>Back</button>
+                  {showResult && (
+                    <div
+                      key={showResult ? "editor-active" : "editor-inactive"}
+                      id="editor"
+                      style={{
+                        minHeight: "100px",
+                        width: "90%",
+                        margin: "auto",
+                        border: "1px solid #ccc",
+                      }}
+                    />
+                  )}
+                </TabPanel>
+
+                
+
+              </Tabs>
+            </>) : (<><p>Loading...</p></>)}</>
+          ) : (<>
+            <p>Enter article contents:</p>
+            <textarea
+              name="inputArticle"
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              rows={20}
+              cols={100}
+              style={{ borderRadius: "5px" }}
+            />
+            <br />
+            <p>
+              Number of results:{" "}
+              <select
+                value={numResults}
+                onChange={(e) => setNumResults(parseInt(e.target.value))}>
+                <option value={1}>1</option>
+                <option value={2}>2</option>
+                <option value={3}>3</option>
+                <option value={4}>4</option>
+                <option value={5}>5</option>
+                <option value={6}>6</option>
+                <option value={7}>7</option>
+                <option value={8}>8</option>
+                <option value={9}>9</option>
+                <option value={10}>10</option>
+              </select>
+              <button className="Button" onClick={handleSearch}>
+                Search
+              </button>
+            </p></>)}
         </div>
       </body>
     </div>
