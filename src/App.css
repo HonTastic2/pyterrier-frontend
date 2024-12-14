@@ -58,3 +58,16 @@
   background-color: #f9f9f9;
 }
 
+.react-tabs__tab-panel {
+  visibility: hidden;
+  height: 0;
+  overflow: hidden;
+}
+
+.react-tabs__tab-panel--selected {
+  visibility: visible;
+  height: auto;
+  overflow: visible;
+}
+
+
