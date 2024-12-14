@@ -5,6 +5,8 @@ import pandas as pd # type: ignore
 import ir_datasets
 import shutil
 import os
+import sqlite3
+
 dataset = ir_datasets.load('wapo/v2/trec-news-2019')
 
 if not pt.java.started():
@@ -30,6 +32,29 @@ else:
 
 print(f"Indexed {index.getCollectionStatistics().getNumberOfDocuments()} documents")
 
+def get_db_connection():
+    conn = sqlite3.connect('database.db')
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    conn = sqlite3.connect("database.db")
+    cursor = conn.cursor()
+
+    # Create the `links` table if it doesn't exist
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS links (
+            id INTEGER PRIMARY KEY,
+            url TEXT NOT NULL,
+            title TEXT NOT NULL,
+            status TEXT DEFAULT NULL,
+            query TEXT,
+            rank INTEGER
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
 BM25 = pt.BatchRetrieve(index, wmodel='BM25')
 
 def search_top_n(query_text, retriever, n):
@@ -48,13 +73,43 @@ def search_top_n(query_text, retriever, n):
 app = Flask(__name__)
 CORS(app) 
 
+@app.before_first_request
+def setup():
+    init_db()
+
 @app.route('/api/data', methods=['POST'])
 def post_data():
     data = request.get_json()
     input_query = data.get('query')
     n = data.get('num_results')
     result = search_top_n(input_query, BM25, n)
+
+     # Save results to the database
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    for rank, result in enumerate(result, start=1):
+        cursor.execute(
+            'INSERT INTO links (url, title, query, rank) VALUES (?, ?, ?, ?)',
+            (result['url'], result['title'], input_query, rank)
+        )
+    conn.commit()
+    conn.close()
+
     return jsonify({"result": result}), 201
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True)
+
+@app.route('/api/update_link', methods=['POST'])
+def update_link():
+    data = request.json
+    link_id = data['id']
+    status = data['status']
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('UPDATE links SET status = ? WHERE id = ?', (status, link_id))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"message": "Link updated successfully"}), 200
