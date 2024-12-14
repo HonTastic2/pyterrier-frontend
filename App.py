@@ -57,6 +57,24 @@ def init_db():
 
 BM25 = pt.BatchRetrieve(index, wmodel='BM25')
 
+def print_db():
+    # Connect to the database (replace 'your_database.db' with your actual file path)
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+
+    # Query to select all data from the 'links' table
+    cursor.execute('SELECT * FROM links')
+
+    # Fetch all results
+    rows = cursor.fetchall()
+
+    # Print each row
+    for row in rows:
+        print(row)
+
+    # Close the connection
+    conn.close()
+
 def search_top_n(query_text, retriever, n):
     result = []
     # Create query as a dataframe and get top 10 results
@@ -71,11 +89,14 @@ def search_top_n(query_text, retriever, n):
     return result
 
 app = Flask(__name__)
-CORS(app) 
+CORS(app)
 
-@app.before_first_request
+@app.before_request
 def setup():
     init_db()
+    if not hasattr(app, 'has_run'):
+        app.has_run = True
+
 
 @app.route('/api/data', methods=['POST'])
 def post_data():
@@ -91,15 +112,13 @@ def post_data():
     for rank, result in enumerate(results):
         cursor.execute(
             'INSERT INTO links (url, title, query, rank) VALUES (?, ?, ?, ?)',
-            (result['url'], result['title'], input_query, rank)
+            (result[2], result[1], input_query, rank)
         )
     conn.commit()
     conn.close()
 
     return jsonify({"result": results}), 201
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=True)
 
 @app.route('/api/update_link', methods=['POST'])
 def update_link():
@@ -116,4 +135,10 @@ def update_link():
     conn.commit()
     conn.close()
 
+    print_db()
+    print(1)
+
     return jsonify({"message": "Link updated successfully"}), 200
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
