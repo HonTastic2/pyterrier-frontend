@@ -73,13 +73,13 @@ function App() {
     if (activeTab === 1 && !quillRef.current) {
       const editorElement = document.getElementById("editor");
       if (editorElement) {
-          if (!quillRef.current) {
-            quillRef.current = new Quill(editorElement, {
-              modules: { toolbar: false },
-              theme: "snow",
-            });
-            quillRef.current.setText(inputText); // Initialize with text
-          }
+        if (!quillRef.current) {
+          quillRef.current = new Quill(editorElement, {
+            modules: { toolbar: false },
+            theme: "snow",
+          });
+          quillRef.current.setText(inputText); // Initialize with text
+        }
       }
     }
   }, [activeTab, inputText]);
@@ -116,6 +116,13 @@ function App() {
     const quill = quillRef.current;
     quill.format("link", false);
   }
+
+  const updateLinkStatus = (url, status, query) => {
+    axios
+      .post("http://127.0.0.1:5000/api/update_link", { status:status, query:query, url:url })
+      .then((response) => {console.log(response.data.message);})
+      .catch((error) => console.error("Error updating link:", error));
+  };
 
   return (
     <div className="App">
@@ -173,6 +180,18 @@ function App() {
                               onClick={(event) => linkSelectedText(event)}>
                               Link to Selected Text
                             </button>
+                            <button
+                              id={i + "GoodButton"}
+                              className="URL-button"
+                              onClick={() => updateLinkStatus(article[2], "good", inputText)}>
+                              Good
+                            </button>
+                            <button
+                              id={i + "BadButton"}
+                              className="URL-button"
+                              onClick={() => updateLinkStatus(article[2], "bad", inputText)}>
+                              Bad
+                            </button>
                           </td>
                         </tr>
                       ))}
@@ -194,7 +213,7 @@ function App() {
                   )}
                 </TabPanel>
 
-                
+
 
               </Tabs>
             </>) : (<><p>Loading...</p></>)}</>

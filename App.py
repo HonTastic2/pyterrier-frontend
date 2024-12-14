@@ -41,7 +41,7 @@ def init_db():
     conn = sqlite3.connect("database.db")
     cursor = conn.cursor()
 
-    # Create the `links` table if it doesn't exist
+    # Create table if it doesn't exist
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS links (
             id INTEGER PRIMARY KEY,
@@ -79,15 +79,16 @@ def setup():
 
 @app.route('/api/data', methods=['POST'])
 def post_data():
+    # Parse input and get results
     data = request.get_json()
     input_query = data.get('query')
     n = data.get('num_results')
-    result = search_top_n(input_query, BM25, n)
+    results = search_top_n(input_query, BM25, n)
 
-     # Save results to the database
+    # Save results to the database
     conn = get_db_connection()
     cursor = conn.cursor()
-    for rank, result in enumerate(result, start=1):
+    for rank, result in enumerate(results):
         cursor.execute(
             'INSERT INTO links (url, title, query, rank) VALUES (?, ?, ?, ?)',
             (result['url'], result['title'], input_query, rank)
@@ -95,20 +96,23 @@ def post_data():
     conn.commit()
     conn.close()
 
-    return jsonify({"result": result}), 201
+    return jsonify({"result": results}), 201
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True)
 
 @app.route('/api/update_link', methods=['POST'])
 def update_link():
+    # Parse given data
     data = request.json
-    link_id = data['id']
+    url = data['url']
     status = data['status']
+    input_query = data['query']
 
+    # Update database accordingly
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('UPDATE links SET status = ? WHERE id = ?', (status, link_id))
+    cursor.execute('UPDATE links SET status = ? WHERE url = ? AND query = ?', (status, url, input_query))
     conn.commit()
     conn.close()
 
