@@ -45,11 +45,11 @@ def init_db():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS links (
             id INTEGER PRIMARY KEY,
+            status TEXT DEFAULT NULL,
+            rank INTEGER,
             url TEXT NOT NULL,
             title TEXT NOT NULL,
-            status TEXT DEFAULT NULL,
-            query TEXT,
-            rank INTEGER
+            query TEXT
         )
     ''')
     conn.commit()
@@ -58,7 +58,6 @@ def init_db():
 BM25 = pt.BatchRetrieve(index, wmodel='BM25')
 
 def print_db():
-    # Connect to the database (replace 'your_database.db' with your actual file path)
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
 
@@ -122,23 +121,27 @@ def post_data():
 
 @app.route('/api/update_link', methods=['POST'])
 def update_link():
-    # Parse given data
-    data = request.json
-    url = data['url']
-    status = data['status']
-    input_query = data['query']
+    try:
+        # Parse given data
+        data = request.json
+        url = data['url']
+        status = data['status']
+        input_query = data['query']
 
-    # Update database accordingly
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('UPDATE links SET status = ? WHERE url = ? AND query = ?', (status, url, input_query))
-    conn.commit()
-    conn.close()
+        # Update database accordingly
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('UPDATE links SET status = ? WHERE url = ? AND query = ?', (status, url, input_query))
+        conn.commit()
+        conn.close()
 
-    print_db()
-    print(1)
+        print_db()
+        print(1)
 
-    return jsonify({"message": "Link updated successfully"}), 200
+        return jsonify({"message": "Link updated successfully"}), 200
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"message": "Error updating link"}), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
