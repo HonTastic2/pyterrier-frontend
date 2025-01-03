@@ -114,7 +114,18 @@ function App() {
 
   const resetLinks = () => {
     const quill = quillRef.current;
-    quill.format("link", false);
+    if (!quill) return;
+    const length = quill.getLength();
+    quill.formatText(0, length, "link", false);
+  };
+  
+
+  const resetSelectedLink = () => {
+    const quill = quillRef.current;
+    const range = quill.getSelection();
+    if (range && range.length > 0) {
+      quill.formatText(range.index, range.length, "link", false);
+    }
   }
 
   const updateLinkStatus = (url, status, query) => {
@@ -197,7 +208,8 @@ function App() {
                       ))}
                     </tbody>
                   </table>
-                  <button className="Button" onClick={resetLinks}>Reset Links</button>
+                  <button className="Button" onClick={resetLinks}>Remove All Links</button>
+                  <button className="Button" onClick={resetSelectedLink}>Remove Selected Link</button>
                   <button className="Button" onClick={goBack}>Back</button>
                   {showResult && (
                     <div
