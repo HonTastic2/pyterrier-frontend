@@ -5,6 +5,8 @@ import pandas as pd # type: ignore
 import ir_datasets
 import shutil
 import os
+import sqlite3
+
 dataset = ir_datasets.load('wapo/v2/trec-news-2019')
 
 if not pt.java.started():
@@ -30,7 +32,41 @@ else:
 
 print(f"Indexed {index.getCollectionStatistics().getNumberOfDocuments()} documents")
 
+def get_db_connection():
+    conn = sqlite3.connect('database.db')
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    conn = sqlite3.connect("database.db")
+    cursor = conn.cursor()
+
+    # Create table if it doesn't exist
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS links (
+            id INTEGER PRIMARY KEY,
+            status TEXT DEFAULT NULL,
+            rank INTEGER,
+            url TEXT NOT NULL,
+            title TEXT NOT NULL,
+            query TEXT
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
 BM25 = pt.BatchRetrieve(index, wmodel='BM25')
+
+def print_db():
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM links')
+    rows = cursor.fetchall()
+
+    for row in rows:
+        print(row)
+
+    conn.close()
 
 def search_top_n(query_text, retriever, n):
     result = []
@@ -46,15 +82,60 @@ def search_top_n(query_text, retriever, n):
     return result
 
 app = Flask(__name__)
-CORS(app) 
+CORS(app)
+
+@app.before_request
+def setup():
+    init_db()
+    if not hasattr(app, 'has_run'):
+        app.has_run = True
+
 
 @app.route('/api/data', methods=['POST'])
 def post_data():
+    # Parse input and get results
     data = request.get_json()
     input_query = data.get('query')
     n = data.get('num_results')
-    result = search_top_n(input_query, BM25, n)
-    return jsonify({"result": result}), 201
+    results = search_top_n(input_query, BM25, n)
+
+    # Save results to the database
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    for rank, result in enumerate(results):
+        cursor.execute(
+            'INSERT INTO links (url, title, query, rank) VALUES (?, ?, ?, ?)',
+            (result[2], result[1], input_query, rank)
+        )
+    conn.commit()
+    conn.close()
+
+    return jsonify({"result": results}), 201
+
+
+@app.route('/api/update_link', methods=['POST'])
+def update_link():
+    try:
+        # Parse given data
+        data = request.json
+        url = data['url']
+        status = data['status']
+        input_query = data['query']
+
+        # Update database accordingly
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('UPDATE links SET status = ? WHERE url = ? AND query = ?', (status, url, input_query))
+        conn.commit()
+        conn.close()
+
+        print_db()
+        print(1)
+
+        return jsonify({"message": "Link updated successfully"}), 200
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"message": "Error updating link"}), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)

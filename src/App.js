@@ -73,13 +73,13 @@ function App() {
     if (activeTab === 1 && !quillRef.current) {
       const editorElement = document.getElementById("editor");
       if (editorElement) {
-          if (!quillRef.current) {
-            quillRef.current = new Quill(editorElement, {
-              modules: { toolbar: false },
-              theme: "snow",
-            });
-            quillRef.current.setText(inputText); // Initialize with text
-          }
+        if (!quillRef.current) {
+          quillRef.current = new Quill(editorElement, {
+            modules: { toolbar: false },
+            theme: "snow",
+          });
+          quillRef.current.setText(inputText); // Initialize with text
+        }
       }
     }
   }, [activeTab, inputText]);
@@ -114,8 +114,26 @@ function App() {
 
   const resetLinks = () => {
     const quill = quillRef.current;
-    quill.format("link", false);
+    if (!quill) return;
+    const length = quill.getLength();
+    quill.formatText(0, length, "link", false);
+  };
+  
+
+  const resetSelectedLink = () => {
+    const quill = quillRef.current;
+    const range = quill.getSelection();
+    if (range && range.length > 0) {
+      quill.formatText(range.index, range.length, "link", false);
+    }
   }
+
+  const updateLinkStatus = (url, status, query) => {
+    axios
+      .post("http://127.0.0.1:5000/api/update_link", { status: status, query: query, url: url })
+      .then((response) => { console.log(response.data.message); })
+      .catch((error) => console.error("Error updating link:", error));
+  };
 
   return (
     <div className="App">
@@ -173,12 +191,25 @@ function App() {
                               onClick={(event) => linkSelectedText(event)}>
                               Link to Selected Text
                             </button>
+                            <button
+                              id={i + "GoodButton"}
+                              className="good-button"
+                              onClick={() => updateLinkStatus(article[2], "good", inputText)}>
+                              👍
+                            </button>
+                            <button
+                              id={i + "BadButton"}
+                              className="bad-button"
+                              onClick={() => updateLinkStatus(article[2], "bad", inputText)}>
+                              👎
+                            </button>
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
-                  <button className="Button" onClick={resetLinks}>Reset Links</button>
+                  <button className="Button" onClick={resetLinks}>Remove All Links</button>
+                  <button className="Button" onClick={resetSelectedLink}>Remove Selected Link</button>
                   <button className="Button" onClick={goBack}>Back</button>
                   {showResult && (
                     <div
@@ -194,7 +225,7 @@ function App() {
                   )}
                 </TabPanel>
 
-                
+
 
               </Tabs>
             </>) : (<><p>Loading...</p></>)}</>
