@@ -37,6 +37,26 @@
   cursor: pointer;
 }
 
+.good-button {
+  background-color: #3dbb24;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 5px 4px;
+  margin: 10px;
+  cursor: pointer;
+}
+
+.bad-button {
+  background-color: #bb2f2f;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 5px 4px;
+  margin: 10px;
+  cursor: pointer;
+}
+
 .ResultTable {
   width: 90%;
   border-collapse: collapse;

@@ -60,18 +60,12 @@ BM25 = pt.BatchRetrieve(index, wmodel='BM25')
 def print_db():
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
-
-    # Query to select all data from the 'links' table
     cursor.execute('SELECT * FROM links')
-
-    # Fetch all results
     rows = cursor.fetchall()
 
-    # Print each row
     for row in rows:
         print(row)
 
-    # Close the connection
     conn.close()
 
 def search_top_n(query_text, retriever, n):

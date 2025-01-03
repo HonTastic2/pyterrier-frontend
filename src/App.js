@@ -182,15 +182,15 @@ function App() {
                             </button>
                             <button
                               id={i + "GoodButton"}
-                              className="URL-button"
+                              className="good-button"
                               onClick={() => updateLinkStatus(article[2], "good", inputText)}>
-                              Good
+                              👍
                             </button>
                             <button
                               id={i + "BadButton"}
-                              className="URL-button"
+                              className="bad-button"
                               onClick={() => updateLinkStatus(article[2], "bad", inputText)}>
-                              Bad
+                              👎
                             </button>
                           </td>
                         </tr>
