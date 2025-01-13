@@ -32,6 +32,7 @@ function App() {
   const [numResults, setNumResults] = useState(5);
   const [data, setData] = useState(null);
   const [selectedText, setSelectedText] = useState("");
+  const [showError, setShowError] = useState(false);
   // const [editorReady, setEditorReady] = useState(false);
   // const editorRef = useRef(null);
   const quillRef = useRef(null);
@@ -51,7 +52,7 @@ function App() {
     axios
       .post("http://127.0.0.1:5000/api/data", { query: inputText, num_results: numResults, })
       .then((response) => setData(response.data.result), setShowResult(true))
-      .catch((error) => console.error("Error fetching data:", error));
+      .catch((error) => console.error("Error fetching data:", error), setShowError(true));
 
     // setEditorReady(true);
     setActiveTab(0);
@@ -62,6 +63,7 @@ function App() {
     setShowResult(false);
     setData(null);
     setActiveTab(null);
+    setShowError(false);
     // setEditorReady(false);
     if (quillRef.current) {
       quillRef.current = null;
@@ -143,7 +145,12 @@ function App() {
       <body className="App-body">
         <div>
           {/* Display the search result or the input page */}
-          {showResult ? (<>
+          {showError ? (<>
+            <p>Error getting links!</p>
+            <p>Please click back to try again:</p>
+            <button className="Button" onClick={goBack}>
+              Back
+            </button></>) : (<>{showResult ? (<>
             {data ? (<>
               <br />
               <Tabs onSelect={(i) => handleTabSelect(i)} forceRenderTabPanel>
@@ -259,7 +266,7 @@ function App() {
               <button className="Button" onClick={handleSearch}>
                 Search
               </button>
-            </p></>)}
+            </p></>)}</>)}
         </div>
       </body>
     </div>
