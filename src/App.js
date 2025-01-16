@@ -56,9 +56,10 @@ function App() {
 
   // Send input text to backend server and find most relevant articles
   const handleSearch = () => {
+    setShowResult(true);
     axios
       .post("http://127.0.0.1:5000/api/data", { title: sanitizeString(inputTitle), body: sanitizeString(inputText), num_results: numResults, method: method})
-      .then((response) => {setData(response.data.result); setShowResult(true)})
+      .then((response) => {setData(response.data.result)})
       .catch((error) => {console.error("Error fetching data:", error); setShowResult(true); setShowError(true)});
 
     // setEditorReady(true);
