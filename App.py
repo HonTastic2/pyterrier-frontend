@@ -68,6 +68,21 @@ def print_db():
 
     conn.close()
 
+def split_query(query, chunk_size=64):
+    terms = query.split()
+    return [terms[i:i+chunk_size] for i in range(0, len(terms), chunk_size)]
+
+def run_split_query(retriever, query):
+    subqueries = split_query(query)
+    results = []
+    
+    for subquery in subqueries:
+        subquery_str = " ".join(subquery)
+        res = retriever.transform(pd.DataFrame([{"qid":"1", "query": subquery_str}]))
+        results.append(res)
+
+    return pd.concat(results, ignore_index=True)
+
 def search_top_n(query_title, query_body, method, retriever, n):
     result = []
     if (method == "title"):
@@ -80,8 +95,9 @@ def search_top_n(query_title, query_body, method, retriever, n):
         query_text = query_title
 
     # Create query as a dataframe and get top 10 results
-    query_df = pd.DataFrame([{"qid": "1", "query": query_text}])
-    results = retriever.transform(query_df).head(n)
+    # query_df = pd.DataFrame([{"qid": "1", "query": query_text}])
+    # results = retriever.transform(query_df).head(n)
+    results = run_split_query(retriever, query_text).head(n)
     
     # Format results
     for i, row in results.iterrows():
