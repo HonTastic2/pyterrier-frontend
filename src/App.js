@@ -32,6 +32,7 @@ function App() {
   const [numResults, setNumResults] = useState(5);
   const [data, setData] = useState(null);
   const [selectedText, setSelectedText] = useState("");
+  const [showError, setShowError] = useState(false);
   // const [editorReady, setEditorReady] = useState(false);
   // const editorRef = useRef(null);
   const quillRef = useRef(null);
@@ -46,14 +47,20 @@ function App() {
     setSelectedText(text);
   };
 
+  function sanitizeString(str){
+    str = str.replace(/[^a-z0-9áéíóúñü \.,_-]/gim,"");
+    return str.trim();
+  };
+
   // Send input text to backend server and find most relevant articles
   const handleSearch = () => {
     axios
-      .post("http://127.0.0.1:5000/api/data", { query: inputText, num_results: numResults, })
-      .then((response) => setData(response.data.result), setShowResult(true))
-      .catch((error) => console.error("Error fetching data:", error));
+      .post("http://127.0.0.1:5000/api/data", { query: sanitizeString(inputText), num_results: numResults, })
+      .then((response) => {setData(response.data.result); setShowResult(true)})
+      .catch((error) => {console.error("Error fetching data:", error); setShowResult(true); setShowError(true)});
 
     // setEditorReady(true);
+    console.log(showError);
     setActiveTab(0);
   };
 
@@ -62,6 +69,7 @@ function App() {
     setShowResult(false);
     setData(null);
     setActiveTab(null);
+    setShowError(false);
     // setEditorReady(false);
     if (quillRef.current) {
       quillRef.current = null;
@@ -142,124 +150,138 @@ function App() {
       </header>
       <body className="App-body">
         <div>
-          {/* Display the search result or the input page */}
-          {showResult ? (<>
-            {data ? (<>
-              <br />
-              <Tabs onSelect={(i) => handleTabSelect(i)} forceRenderTabPanel>
-                <TabList>
-                  <Tab>Input Document</Tab>
-                  <Tab>Table/Link Articles</Tab>
-                </TabList>
-
-                <TabPanel>
-                  <p onMouseUp={handleSelection}>{inputText}</p>
-                  <p>Selected text: {selectedText}</p>
-                  {/* <button className="Button" onClick={linkSelectedText}>Links</button> */}
-                  <button className="Button" onClick={goBack}>Back</button>
-                </TabPanel>
-
-                {/* Go through returned data list, iterate through each article and then display them */}
-                <TabPanel>
-                  <table className="ResultTable">
-                    <thead>
-                      <tr>
-                        <th>Rank</th>
-                        <th>Title/URL</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data.map((article, i) => (
-                        <tr key={i}>
-                          <td>{article[0]}</td>
-                          <td>
-                            <a id={i} href={article[2]}>
-                              {article[1]}
-                            </a>
-                          </td>
-                          <td>
-                            <button
-                              id={i + "Button"}
-                              className="URL-button"
-                              onClick={(event) => copyURL(event)}>
-                              Copy URL
-                            </button>
-                            <button
-                              id={i + "Button"}
-                              className="URL-button"
-                              onClick={(event) => linkSelectedText(event)}>
-                              Link to Selected Text
-                            </button>
-                            <button
-                              id={i + "GoodButton"}
-                              className="good-button"
-                              onClick={() => updateLinkStatus(article[2], "good", inputText)}>
-                              👍
-                            </button>
-                            <button
-                              id={i + "BadButton"}
-                              className="bad-button"
-                              onClick={() => updateLinkStatus(article[2], "bad", inputText)}>
-                              👎
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  <button className="Button" onClick={resetLinks}>Remove All Links</button>
-                  <button className="Button" onClick={resetSelectedLink}>Remove Selected Link</button>
-                  <button className="Button" onClick={goBack}>Back</button>
-                  {showResult && (
-                    <div
-                      key={showResult ? "editor-active" : "editor-inactive"}
-                      id="editor"
-                      style={{
-                        minHeight: "100px",
-                        width: "90%",
-                        margin: "auto",
-                        border: "1px solid #ccc",
-                      }}
-                    />
-                  )}
-                </TabPanel>
-
-
-
-              </Tabs>
-            </>) : (<><p>Loading...</p></>)}</>
-          ) : (<>
-            <p>Enter article contents:</p>
-            <textarea
-              name="inputArticle"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              rows={20}
-              cols={100}
-              style={{ borderRadius: "5px" }}
-            />
+          {/* Display the search result, error or the input page */}
+          {showResult ? (
+  <>
+    {showError ? (
+      <>
+        <p>Error getting links!</p>
+        <p>Please click back to try again:</p>
+        <button className="Button" onClick={goBack}>Back</button>
+      </>
+    ) : (
+      <>
+        {data ? (
+          <>
             <br />
-            <p>
-              Number of results:{" "}
-              <select
-                value={numResults}
-                onChange={(e) => setNumResults(parseInt(e.target.value))}>
-                <option value={1}>1</option>
-                <option value={2}>2</option>
-                <option value={3}>3</option>
-                <option value={4}>4</option>
-                <option value={5}>5</option>
-                <option value={6}>6</option>
-                <option value={7}>7</option>
-                <option value={8}>8</option>
-                <option value={9}>9</option>
-                <option value={10}>10</option>
-              </select>
-              <button className="Button" onClick={handleSearch}>
-                Search
-              </button>
-            </p></>)}
+            <Tabs onSelect={(i) => handleTabSelect(i)} forceRenderTabPanel>
+              <TabList>
+                <Tab>Input Document</Tab>
+                <Tab>Table/Link Articles</Tab>
+              </TabList>
+
+              <TabPanel>
+                <p onMouseUp={handleSelection}>{inputText}</p>
+                <p>Selected text: {selectedText}</p>
+                <button className="Button" onClick={goBack}>Back</button>
+              </TabPanel>
+
+              <TabPanel>
+                <table className="ResultTable">
+                  <thead>
+                    <tr>
+                      <th>Rank</th>
+                      <th>Title/URL</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.map((article, i) => (
+                      <tr key={i}>
+                        <td>{article[0]}</td>
+                        <td>
+                          <a id={i} href={article[2]}>
+                            {article[1]}
+                          </a>
+                        </td>
+                        <td>
+                          <button
+                            id={i + "Button"}
+                            className="URL-button"
+                            onClick={(event) => copyURL(event)}>
+                            Copy URL
+                          </button>
+                          <button
+                            id={i + "Button"}
+                            className="URL-button"
+                            onClick={(event) => linkSelectedText(event)}>
+                            Link to Selected Text
+                          </button>
+                          <button
+                            id={i + "GoodButton"}
+                            className="good-button"
+                            onClick={() => updateLinkStatus(article[2], "good", inputText)}>
+                            👍
+                          </button>
+                          <button
+                            id={i + "BadButton"}
+                            className="bad-button"
+                            onClick={() => updateLinkStatus(article[2], "bad", inputText)}>
+                            👎
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <button className="Button" onClick={resetLinks}>Remove All Links</button>
+                <button className="Button" onClick={resetSelectedLink}>Remove Selected Link</button>
+                <button className="Button" onClick={goBack}>Back</button>
+                {showResult && (
+                  <div
+                    key={showResult ? "editor-active" : "editor-inactive"}
+                    id="editor"
+                    style={{
+                      minHeight: "100px",
+                      width: "90%",
+                      margin: "auto",
+                      border: "1px solid #ccc",
+                    }}
+                  />
+                )}
+              </TabPanel>
+            </Tabs>
+          </>
+        ) : (
+          <p>Loading...</p>
+        )}
+      </>
+    )}
+  </>
+) : (
+  <>
+    <p>Enter article contents:</p>
+    <textarea
+      name="inputArticle"
+      value={inputText}
+      onChange={(e) => setInputText(e.target.value)}
+      rows={20}
+      cols={100}
+      style={{ borderRadius: "5px" }}
+    />
+    <br />
+    <p>
+      Number of results:{" "}
+      <select
+        value={numResults}
+        onChange={(e) => setNumResults(parseInt(e.target.value))}>
+        <option value={1}>1</option>
+        <option value={2}>2</option>
+        <option value={3}>3</option>
+        <option value={4}>4</option>
+        <option value={5}>5</option>
+        <option value={6}>6</option>
+        <option value={7}>7</option>
+        <option value={8}>8</option>
+        <option value={9}>9</option>
+        <option value={10}>10</option>
+      </select>
+      <button className="Button" onClick={handleSearch}>
+        Search
+      </button>
+    </p>
+  </>
+)}
         </div>
       </body>
     </div>
