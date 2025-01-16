@@ -47,10 +47,15 @@ function App() {
     setSelectedText(text);
   };
 
+  function sanitizeString(str){
+    str = str.replace(/[^a-z0-9áéíóúñü \.,_-]/gim,"");
+    return str.trim();
+  };
+
   // Send input text to backend server and find most relevant articles
   const handleSearch = () => {
     axios
-      .post("http://127.0.0.1:5000/api/data", { query: inputText, num_results: numResults, })
+      .post("http://127.0.0.1:5000/api/data", { query: sanitizeString(inputText), num_results: numResults, })
       .then((response) => {setData(response.data.result); setShowResult(true)})
       .catch((error) => {console.error("Error fetching data:", error); setShowResult(true); setShowError(true)});
 
