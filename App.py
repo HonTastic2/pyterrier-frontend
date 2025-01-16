@@ -68,8 +68,17 @@ def print_db():
 
     conn.close()
 
-def search_top_n(query_text, retriever, n):
+def search_top_n(query_title, query_body, method, retriever, n):
     result = []
+    if (method == "title"):
+        query_text = query_title
+    elif (method == "body"):
+        query_text = query_body
+    elif (method == "titlebody"):
+        query_text = query_title + " " + query_body
+    else:
+        query_text = query_title
+
     # Create query as a dataframe and get top 10 results
     query_df = pd.DataFrame([{"qid": "1", "query": query_text}])
     results = retriever.transform(query_df).head(n)
@@ -95,9 +104,11 @@ def setup():
 def post_data():
     # Parse input and get results
     data = request.get_json()
-    input_query = data.get('query')
+    title = data.get('title')
+    body = data.get('body')
+    method = data.get('method')
     n = data.get('num_results')
-    results = search_top_n(input_query, BM25, n)
+    results = search_top_n(title, body, method, BM25, n)
 
     # Save results to the database
     conn = get_db_connection()
@@ -105,7 +116,7 @@ def post_data():
     for rank, result in enumerate(results):
         cursor.execute(
             'INSERT INTO links (url, title, query, rank) VALUES (?, ?, ?, ?)',
-            (result[2], result[1], input_query, rank)
+            (result[2], result[1], f"{title} {body}", rank)
         )
     conn.commit()
     conn.close()
