@@ -28,6 +28,8 @@ function getSelectionText() {
 
 function App() {
   const [inputText, setInputText] = useState("");
+  const [inputTitle, setInputTitle] = useState("");
+  const [method, setMethod] = useState("title");
   const [showResult, setShowResult] = useState(false);
   const [numResults, setNumResults] = useState(5);
   const [data, setData] = useState(null);
@@ -48,14 +50,14 @@ function App() {
   };
 
   function sanitizeString(str){
-    str = str.replace(/[^a-z0-9áéíóúñü \.,_-]/gim,"");
+    str = str.replace(/[^a-z0-9áéíóúñü \\.,_-]/gim,"");
     return str.trim();
   };
 
   // Send input text to backend server and find most relevant articles
   const handleSearch = () => {
     axios
-      .post("http://127.0.0.1:5000/api/data", { query: sanitizeString(inputText), num_results: numResults, })
+      .post("http://127.0.0.1:5000/api/data", { title: sanitizeString(inputTitle), body: sanitizeString(inputText), num_results: numResults, method: method})
       .then((response) => {setData(response.data.result); setShowResult(true)})
       .catch((error) => {console.error("Error fetching data:", error); setShowResult(true); setShowError(true)});
 
@@ -250,6 +252,16 @@ function App() {
   </>
 ) : (
   <>
+    <p>Enter article title:</p>
+    <textarea
+      name="inputTitle"
+      value={inputTitle}
+      onChange={(e) => setInputTitle(e.target.value)}
+      rows={2}
+      cols={100}
+      style={{ borderRadius: "5px" }}
+    />
+
     <p>Enter article contents:</p>
     <textarea
       name="inputArticle"
@@ -260,7 +272,7 @@ function App() {
       style={{ borderRadius: "5px" }}
     />
     <br />
-    <p>
+    <div>
       Number of results:{" "}
       <select
         value={numResults}
@@ -276,10 +288,18 @@ function App() {
         <option value={9}>9</option>
         <option value={10}>10</option>
       </select>
+      &nbsp;Search method:&nbsp;
+      <select
+        value={method}
+        onChange={(e) => setMethod(e.target.value)}>
+        <option value={"title"}>Title only</option>
+        <option value={"titlebody"}>Title + Body</option>
+        <option value={"body"}>Body only</option>
+      </select>
       <button className="Button" onClick={handleSearch}>
         Search
       </button>
-    </p>
+    </div>
   </>
 )}
         </div>
