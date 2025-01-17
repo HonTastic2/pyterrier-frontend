@@ -8,9 +8,21 @@ import "quill/dist/quill.snow.css";
 
 
 function copyURL(event) {
+  var button = event.target;
   var buttonId = event.target.id;
   var copyText = document.getElementById(buttonId.slice(0, -6));
-  navigator.clipboard.writeText(copyText.href);
+  navigator.clipboard.writeText(copyText.href).then(() => {
+    button.textContent = "Copied!";
+
+    document.querySelectorAll(".URL-button").forEach((btn) => {
+      if (btn !== button) {
+        btn.textContent = "Copy URL";
+      }});
+
+    setTimeout(() => {
+      button.textContent = "Copy URL";
+    }, 2000);
+  });
 }
 
 // Get user highlighted text to add a link to
@@ -206,7 +218,7 @@ function App() {
                           </button>
                           <button
                             id={i + "Button"}
-                            className="URL-button"
+                            className="Link-button"
                             onClick={(event) => linkSelectedText(event)}>
                             Link to Selected Text
                           </button>
@@ -252,7 +264,7 @@ function App() {
     )}
   </>
 ) : (
-  <>
+  <><div>
     <p>Enter article title:</p>
     <textarea
       name="inputTitle"
@@ -262,6 +274,8 @@ function App() {
       cols={100}
       style={{ borderRadius: "5px" }}
     />
+
+  </div>
 
     <p>Enter article contents:</p>
     <textarea

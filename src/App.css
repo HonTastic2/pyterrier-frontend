@@ -37,6 +37,16 @@
   cursor: pointer;
 }
 
+.Link-button {
+  /* background-color: #9eaecc;
+  color: white; */
+  border: none;
+  border-radius: 5px;
+  padding: 5px 4px;
+  margin: 10px;
+  cursor: pointer;
+}
+
 .good-button {
   background-color: #3dbb24;
   color: white;
