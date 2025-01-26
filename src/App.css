@@ -38,11 +38,11 @@
 }
 
 .Link-button {
-  /* background-color: #9eaecc;
-  color: white; */
+  background-color: #3968c8;
+  color: white;
   border: none;
   border-radius: 5px;
-  padding: 5px 4px;
+  padding: 6px 4px;
   margin: 10px;
   cursor: pointer;
 }
@@ -52,8 +52,8 @@
   color: white;
   border: none;
   border-radius: 5px;
-  padding: 5px 4px;
-  margin: 10px;
+  padding: 5px 10px;
+  /* margin: 10px; */
   cursor: pointer;
 }
 
@@ -62,8 +62,8 @@
   color: white;
   border: none;
   border-radius: 5px;
-  padding: 5px 4px;
-  margin: 10px;
+  padding: 5px 10px;
+  margin: 1px;
   cursor: pointer;
 }
 
