@@ -6,6 +6,8 @@ import "react-tabs/style/react-tabs.css";
 import Quill from "quill";
 import "quill/dist/quill.snow.css";
 
+document.body.style = 'background: #4f707f;';
+
 
 function copyURL(event) {
   var button = event.target;
@@ -16,12 +18,12 @@ function copyURL(event) {
 
     document.querySelectorAll(".URL-button").forEach((btn) => {
       if (btn !== button) {
-        btn.textContent = "Copy URL";
+        btn.textContent = "Copy";
       }
     });
 
     setTimeout(() => {
-      button.textContent = "Copy URL";
+      button.textContent = "Copy";
     }, 2000);
   });
 }
@@ -113,49 +115,31 @@ function App() {
         setQuillInitialized(false);
       }
     };
-  }, [activeTab]);
+  }, [activeTab, inputText]);
 
-  // useEffect(() => {
-  //   if (quillInitialized && quillRef.current) {
-  //     quillRef.current.setText(inputText); // Update text when quillInitialized changes
-  //   }
-  // }, [quillInitialized]);
-
-  // useEffect(() => {
-  //   if (activeTab === 0 && quillRef.current) {
-  //     quillRef.current.setText(inputText); // Ensure Quill updates with new inputText
-  //   }
-  // }, [activeTab]);
-
-  // useLayoutEffect(() => {
-  //   const editorElement = document.getElementById("editor");
-
-  //   if (activeTab === 0 && editorElement) {
-  //     if (!quillRef.current) {
-  //       quillRef.current = new Quill(editorElement, {
-  //         modules: { toolbar: false },
-  //         theme: "snow",
-  //       });
-  //     }
-  //     quillRef.current.setText(inputText); // Ensure Quill updates with new inputText
-  //   }
-  // }, [activeTab, inputText]); // Depend on both activeTab and inputText
-
-
-
-  // useEffect(() => {
-  //   console.log("EditorRef:", editorRef.current); // This should not be null when showResult is true
-  // }, [editorRef.current]);
 
 
   // Handle making the selected text a link
   const linkSelectedText = (event) => {
     const quill = quillRef.current;
     const range = quill.getSelection();
+    var button = event.target;
     var buttonId = event.target.id;
     var copyText = document.getElementById(buttonId.slice(0, -6));
     if (range && range.length > 0) {
       quill.formatText(range.index, range.length, "link", copyText.href);
+      button.textContent = "Linked!";
+
+      document.querySelectorAll(".Link-button").forEach((btn) => {
+        if (btn !== button) {
+          btn.textContent = "Link";
+        }
+      });
+
+      setTimeout(() => {
+        button.textContent = "Link";
+      }, 2000);
+
     } else {
       alert("Please select text to link.");
     }
@@ -196,8 +180,8 @@ function App() {
             <>
               {showError ? (
                 <>
-                  <p>Error getting links!</p>
-                  <p>Please click back to try again:</p>
+                  <p style={{ color: "#ffffff" }}>Error getting links!</p>
+                  <p style={{ color: "#ffffff" }}>Please click back to try again:</p>
                   <button className="Button" onClick={goBack}>Back</button>
                 </>
               ) : (
@@ -205,14 +189,14 @@ function App() {
                   {data ? (
                     <>
                       <br />
-                      <Tabs onSelect={(i) => handleTabSelect(i)} forceRenderTabPanel>
+                      <Tabs selectedTabClassName="react-tabs__tab--selected" onSelect={(i) => handleTabSelect(i)} forceRenderTabPanel>
                         <TabList>
                           <Tab>Input Document</Tab>
                           <Tab>Table/Link Articles</Tab>
                         </TabList>
 
                         <TabPanel>
-                          <div style={{ display: "grid", alignItems: "center", gridGap: 10, columnGap: 100, paddingLeft: "10%" }}>
+                          <div style={{ display: "grid", alignItems: "center", columnGap: 10, paddingLeft: "10%" }}>
                             {data.map((article, i) => (
                               <div key={i} style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
 
@@ -228,6 +212,12 @@ function App() {
                                   onClick={() => updateLinkStatus(article[2], "bad", inputText)}>
                                   👎
                                 </button>
+                                <button
+                                  id={i + "Button"}
+                                  className="URL-button"
+                                  onClick={(event) => copyURL(event)}>
+                                  Copy
+                                </button>
 
                                 <button
                                   id={i + "Button"}
@@ -236,17 +226,10 @@ function App() {
                                   Link
                                 </button>
 
-                                <span>{article[0]}</span>
-                                <a id={i} href={article[2]}>
+                                <a id={i} href={article[2]} style={{ color: "#44a9d8" }}>
                                   {article[1]}
                                 </a>
 
-                                <button
-                                  id={i + "Button"}
-                                  className="URL-button"
-                                  onClick={(event) => copyURL(event)}>
-                                  Copy URL
-                                </button>
 
                               </div>))}
                           </div>
@@ -260,9 +243,11 @@ function App() {
                               id="editor"
                               style={{
                                 minHeight: "100px",
-                                width: "90%",
+                                width: "80%",
                                 margin: "auto",
                                 border: "1px solid #ccc",
+                                borderRadius: "5px",
+                                backgroundColor: "#d9d9d9",
                               }}
                             />
                           )}
@@ -277,38 +262,37 @@ function App() {
                       </Tabs>
                     </>
                   ) : (
-                    <p>Loading...</p>
+                    <p style={{ color: "#ffffff" }}>Loading...</p>
                   )}
                 </>
               )}
             </>
           ) : (
-            <><div style={{ display: "grid", alignItems: "center", gridGap: 10, columnGap: 100, gridTemplateColumns: "repeat(2, 1fr)" }}>
+            <><div className="Input-fields">
 
-            {/* <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}> */}
-              Enter article title:
+              <span style={{ justifySelf: "right", color: "#ffffff" }}>Enter article title: &nbsp;</span>
               <textarea
                 name="inputTitle"
                 value={inputTitle}
                 onChange={(e) => setInputTitle(e.target.value)}
                 rows={2}
                 cols={100}
-                style={{ borderRadius: "5px" }}
+                style={{ borderRadius: "5px", justifySelf: "left", backgroundColor: "#d9d9d9" }}
               />
-            {/* </div>
-            <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}> */}
-              Enter article contents:
+
+              <span style={{ justifySelf: "right", color: "#ffffff" }}>Enter article contents: &nbsp;</span>
               <textarea
                 name="inputArticle"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 rows={20}
                 cols={100}
-                style={{ borderRadius: "5px" }}
+                style={{ borderRadius: "5px", justifySelf: "left", backgroundColor: "#d9d9d9" }}
               />
-            {/* </div> */}
+              {/* </div> */}
+            </div>
               <div>
-                Number of results:{" "}
+                <span style={{ color: "#ffffff" }}>Number of results:{" "}</span>
                 <select
                   value={numResults}
                   onChange={(e) => setNumResults(parseInt(e.target.value))}>
@@ -323,7 +307,7 @@ function App() {
                   <option value={9}>9</option>
                   <option value={10}>10</option>
                 </select>
-                &nbsp;Search method:&nbsp;
+                <span style={{ color: "#ffffff" }}>&nbsp;Search method:&nbsp;</span>
                 <select
                   value={method}
                   onChange={(e) => setMethod(e.target.value)}>
@@ -335,7 +319,6 @@ function App() {
                   Search
                 </button>
               </div>
-            </div>
             </>
           )}
         </div>
