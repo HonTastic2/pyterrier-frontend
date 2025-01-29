@@ -6,8 +6,12 @@ import ir_datasets
 import shutil
 import os
 import sqlite3
+from dotenv import load_dotenv
+from openai import OpenAI
 
 dataset = ir_datasets.load('wapo/v2/trec-news-2019')
+load_dotenv()
+
 
 if not pt.java.started():
     pt.java.init()
@@ -31,6 +35,8 @@ else:
     index = pt.IndexFactory.of(index_ref)
 
 print(f"Indexed {index.getCollectionStatistics().getNumberOfDocuments()} documents")
+print(os.getenv('LLAMA_API_KEY'))
+
 
 def get_db_connection():
     conn = sqlite3.connect('database.db')
@@ -83,6 +89,23 @@ def run_split_query(retriever, query):
 
     return pd.concat(results, ignore_index=True)
 
+def summarize_query(query):
+    client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.getenv('OPENAI_API_KEY'),
+    )
+
+    completion = client.chat.completions.create(
+    model="meta-llama/llama-3.1-405b-instruct:free",
+    messages=[
+        {
+        "role": "user",
+        "content": "Summarize the following query to the 20 most informative terms: " + query
+        }
+    ]
+    )
+    return (completion.choices[0].message.content)
+
 def search_top_n(query_title, query_body, method, retriever, n):
     result = []
     if (method == "title"):
@@ -124,6 +147,7 @@ def post_data():
     body = data.get('body')
     method = data.get('method')
     n = data.get('num_results')
+    print(summarize_query(title + " " + body))
     results = search_top_n(title, body, method, BM25, n)
 
     # Save results to the database

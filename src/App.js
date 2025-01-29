@@ -95,11 +95,11 @@ function App() {
     }
   };
 
-  useLayoutEffect(() => {
-    // Initialize Quill only when the editor tab is active
-    if (activeTab === 0 && !quillRef.current) {
+  useEffect(() => {
+    const initializeQuill = () => {
       const editorElement = document.getElementById("editor");
-      if (editorElement) {
+      console.log(editorElement)
+      if (editorElement && !quillRef.current) {
         quillRef.current = new Quill(editorElement, {
           modules: { toolbar: false },
           theme: "snow",
@@ -107,6 +107,10 @@ function App() {
         quillRef.current.setText(inputText); // Initialize with text
         setQuillInitialized(true);
       }
+    };
+  
+    if (showResult) {
+      setTimeout(initializeQuill, 200); // Delay initialization to ensure DOM is updated
     }
 
     return () => {
@@ -115,7 +119,7 @@ function App() {
         setQuillInitialized(false);
       }
     };
-  }, [activeTab, inputText]);
+  }, [activeTab, showResult, inputText]);
 
 
 
@@ -189,10 +193,10 @@ function App() {
                   {data ? (
                     <>
                       <br />
-                      <Tabs selectedTabClassName="react-tabs__tab--selected" onSelect={(i) => handleTabSelect(i)} forceRenderTabPanel>
+                      <Tabs onSelect={(i) => handleTabSelect(i)} forceRenderTabPanel>
                         <TabList>
-                          <Tab>Input Document</Tab>
-                          <Tab>Table/Link Articles</Tab>
+                          <Tab id="tab0">Input Document</Tab>
+                          <Tab id="tab1">Table/Link Articles</Tab>
                         </TabList>
 
                         <TabPanel>
@@ -237,25 +241,23 @@ function App() {
                           <button className="Button" onClick={resetLinks}>Remove All Links</button>
                           <button className="Button" onClick={resetSelectedLink}>Remove Selected Link</button>
                           <button className="Button" onClick={goBack}>Back</button>
-                          {showResult && (
-                            <div
-                              key={activeTab === 0 ? "editor-active" : "editor-inactive"}
-                              id="editor"
-                              style={{
-                                minHeight: "100px",
-                                width: "80%",
-                                margin: "auto",
-                                border: "1px solid #ccc",
-                                borderRadius: "5px",
-                                backgroundColor: "#d9d9d9",
-                              }}
-                            />
-                          )}
+                          <div
+                            key={showResult ? "editor-active" : "editor-inactive"}
+                            id="editor"
+                            style={{
+                              minHeight: "100px",
+                              width: "80%",
+                              margin: "auto",
+                              border: "1px solid #ccc",
+                              borderRadius: "5px",
+                              backgroundColor: "#d9d9d9",
+                            }}
+                          ></div>
                         </TabPanel>
 
                         <TabPanel>
-                          <p onMouseUp={handleSelection}>{inputText}</p>
-                          <p>Selected text: {selectedText}</p>
+                          <p style={{ color: "#ffffff" }} onMouseUp={handleSelection}>{inputText}</p>
+                          <p style={{ color: "#ffffff" }}>Selected text: {selectedText}</p>
                           <button className="Button" onClick={goBack}>Back</button>
                         </TabPanel>
 
@@ -295,6 +297,7 @@ function App() {
                 <span style={{ color: "#ffffff" }}>Number of results:{" "}</span>
                 <select
                   value={numResults}
+                  style={{ borderRadius: "5px" }}
                   onChange={(e) => setNumResults(parseInt(e.target.value))}>
                   <option value={1}>1</option>
                   <option value={2}>2</option>
@@ -310,6 +313,7 @@ function App() {
                 <span style={{ color: "#ffffff" }}>&nbsp;Search method:&nbsp;</span>
                 <select
                   value={method}
+                  style={{ borderRadius: "5px" }}
                   onChange={(e) => setMethod(e.target.value)}>
                   <option value={"title"}>Title only</option>
                   <option value={"titlebody"}>Title + Body</option>
