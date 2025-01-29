@@ -76,7 +76,7 @@ function App() {
     setActiveTab(0);
     axios
       .post("http://127.0.0.1:5000/api/data", { title: sanitizeString(inputTitle), body: sanitizeString(inputText), num_results: numResults, method: method })
-      .then((response) => { setData(response.data.result) })
+      .then((response) => { setData(response.data.result); console.log(response.data.summary); })
       .catch((error) => { console.error("Error fetching data:", error); setShowResult(true); setActiveTab(0); setShowError(true) });
 
     // setEditorReady(true);

@@ -35,7 +35,6 @@ else:
     index = pt.IndexFactory.of(index_ref)
 
 print(f"Indexed {index.getCollectionStatistics().getNumberOfDocuments()} documents")
-print(os.getenv('LLAMA_API_KEY'))
 
 
 def get_db_connection():
@@ -100,10 +99,11 @@ def summarize_query(query):
     messages=[
         {
         "role": "user",
-        "content": "Summarize the following query to the 20 most informative terms: " + query
+        "content": "Summarize the following query to the 20 most informative terms, returning only the terms and no other characters or words: " + query
         }
     ]
     )
+
     return (completion.choices[0].message.content)
 
 def search_top_n(query_title, query_body, method, retriever, n):
@@ -147,7 +147,8 @@ def post_data():
     body = data.get('body')
     method = data.get('method')
     n = data.get('num_results')
-    print(summarize_query(title + " " + body))
+    summarised = summarize_query(title + " " + body)
+    print(summarised)
     results = search_top_n(title, body, method, BM25, n)
 
     # Save results to the database
@@ -161,7 +162,7 @@ def post_data():
     conn.commit()
     conn.close()
 
-    return jsonify({"result": results}), 201
+    return jsonify({"result": results, "summary": summarised}), 201
 
 
 @app.route('/api/update_link', methods=['POST'])
@@ -180,8 +181,8 @@ def update_link():
         conn.commit()
         conn.close()
 
-        print_db()
-        print(1)
+        # print_db()
+        # print(1)
 
         return jsonify({"message": "Link updated successfully"}), 200
     except Exception as e:
