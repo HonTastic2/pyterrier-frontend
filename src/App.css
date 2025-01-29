@@ -1,9 +1,10 @@
 .App {
   text-align: center;
+  background-color: #4f707f;
 }
 
 .App-header {
-  background-color: #3968c8;
+  background-color: #233a4a;
   height: 50px;
   display: flex;
   flex-direction: column;
@@ -18,18 +19,46 @@
 }
 
 .Button {
-  background-color: #3968c8;
+  background-color: #4dbbbf;
   color: white;
   border: none;
   border-radius: 5px;
   padding: 10px 20px;
   margin: 10px;
   cursor: pointer;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  font-weight: bold;
+}
+
+.react-tabs__tab--selected {
+  color: #ffffff; 
+  background-color: #233a4a; 
+}
+
+.Input-fields {
+  display: grid; 
+  align-items: center; 
+  column-gap: 100;
+  grid-template-columns: 1fr 2.5fr;
+  margin: 10px;
+  gap: 3px;
 }
 
 .URL-button {
-  /* background-color: #9eaecc;
-  color: white; */
+  background-color: #4dbbbfc7;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 5px 4px;
+  margin-left: 10px;
+  cursor: pointer;
+}
+
+.Link-button {
+  background-color: #4dbbbfc7;
+  color: white;
   border: none;
   border-radius: 5px;
   padding: 5px 4px;
@@ -38,22 +67,22 @@
 }
 
 .good-button {
-  background-color: #3dbb24;
+  background-color: #3dbb24ac;
   color: white;
   border: none;
   border-radius: 5px;
-  padding: 5px 4px;
-  margin: 10px;
+  padding: 5px 10px;
+  /* margin: 10px; */
   cursor: pointer;
 }
 
 .bad-button {
-  background-color: #bb2f2f;
+  background-color: #bb2f2fc1;
   color: white;
   border: none;
   border-radius: 5px;
-  padding: 5px 4px;
-  margin: 10px;
+  padding: 5px 10px;
+  margin: 1px;
   cursor: pointer;
 }
 
