@@ -326,6 +326,7 @@ function App() {
                               minHeight: "100px",
                               width: "80%",
                               margin: "auto",
+                              marginBottom: "20px",
                               border: "1px solid #ccc",
                               borderRadius: "5px",
                               backgroundColor: "#d9d9d9",
