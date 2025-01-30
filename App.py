@@ -7,7 +7,7 @@ import shutil
 import os
 import sqlite3
 from dotenv import load_dotenv
-from openai import OpenAI
+from openai import OpenAI # type: ignore
 
 dataset = ir_datasets.load('wapo/v2/trec-news-2019')
 load_dotenv()
@@ -94,7 +94,7 @@ def most_common_terms(query, n=20):
         if term in query_toks and term not in stop_words:
             term_weights[term] = le.getFrequency()
     
-    top_terms = sorted(term_weights, key=term_weights.get, reverse=True)[:20]
+    top_terms = sorted(term_weights, key=term_weights.get, reverse=True)[:n]
     return " ".join(top_terms)
 
 def summarize_query(query):

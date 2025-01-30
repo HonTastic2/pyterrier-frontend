@@ -1,6 +1,6 @@
 import "./App.css";
 import axios from "axios";
-import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import "react-tabs/style/react-tabs.css";
 import Quill from "quill";
@@ -29,17 +29,17 @@ function copyURL(event) {
 }
 
 // Get user highlighted text to add a link to
-function getSelectionText() {
-  let text = "";
+// function getSelectionText() {
+//   let text = "";
 
-  if (window.getSelection) {
-    text = window.getSelection().toString();
-  } else if (document.selection && document.selection.type !== "Control") {
-    text = document.selection.createRange().text;
-  }
+//   if (window.getSelection) {
+//     text = window.getSelection().toString();
+//   } else if (document.selection && document.selection.type !== "Control") {
+//     text = document.selection.createRange().text;
+//   }
 
-  return text;
-}
+//   return text;
+// }
 
 function App() {
   const [inputText, setInputText] = useState("");
@@ -48,7 +48,7 @@ function App() {
   const [showResult, setShowResult] = useState(false);
   const [numResults, setNumResults] = useState(5);
   const [data, setData] = useState(null);
-  const [selectedText, setSelectedText] = useState("");
+  // const [selectedText, setSelectedText] = useState("");
   const [showError, setShowError] = useState(false);
   const [summary, setSummary] = useState(null);
   // const [editorReady, setEditorReady] = useState(false);
@@ -60,10 +60,10 @@ function App() {
     setActiveTab(i);
   };
 
-  const handleSelection = () => {
-    const text = getSelectionText();
-    setSelectedText(text);
-  };
+  // const handleSelection = () => {
+  //   const text = getSelectionText();
+  //   setSelectedText(text);
+  // };
 
   function sanitizeString(str) {
     str = str.replace(/[^a-z0-9áéíóúñü \\.,_-]/gim, "");
@@ -157,6 +157,69 @@ function App() {
     quill.formatText(0, length, "link", false);
   };
 
+  const copyText = () => {
+    const quill = quillRef.current;
+    const html = quill.root.innerHTML;
+  
+    // Create a temporary element to store the HTML
+    const tempElem = document.createElement("div");
+    tempElem.innerHTML = html;
+    document.body.appendChild(tempElem);
+  
+    // Use the Selection API to copy as rich text
+    const range = document.createRange();
+    range.selectNodeContents(tempElem);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+  
+    try {
+      document.execCommand("copy");
+    } catch (err) {
+      console.error("Copy failed:", err);
+    }
+  
+    document.body.removeChild(tempElem);
+    selection.removeAllRanges();
+  
+    const button = document.getElementById("copyArticleButton");
+    button.textContent = "Copied!";
+    setTimeout(() => {
+      button.textContent = "Copy Article";
+    }, 2000);
+  };
+
+  const downloadRTF = () => {
+    const quill = quillRef.current;
+    const html = quill.root.innerHTML;
+    const rtfContent = htmlToRtf(html);
+  
+    // Create a Blob and download as .rtf file
+    const blob = new Blob([rtfContent], { type: "application/rtf" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "article.rtf";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+  
+  const htmlToRtf = (html) => {
+    return (
+      "{\\rtf1\\ansi\\deff0 " +
+      html
+        .replace(/<b>(.*?)<\/b>/g, "{\\b $1}") // Bold
+        .replace(/<i>(.*?)<\/i>/g, "{\\i $1}") // Italics
+        .replace(/<u>(.*?)<\/u>/g, "{\\ul $1}") // Underline
+        .replace(/<a href="(.*?)">(.*?)<\/a>/g, "{\\field{\\*\\fldinst HYPERLINK \"$1\"}{\\fldrslt $2}}") // Preserve links
+        .replace(/<br\s*\/?>/g, "\\line ") // New lines
+        .replace(/<\/?[^>]+(>|$)/g, "") + // Remove other HTML tags
+      "}"
+    );
+  };
+  
+  
+
 
   const resetSelectedLink = () => {
     const quill = quillRef.current;
@@ -207,7 +270,7 @@ function App() {
 
                         <TabPanel>
                           <p style={{ color: "#ffffff" }}>Your article has been summarised to:</p>
-                          <p style={{ color: "#ffffff" }} onMouseUp={handleSelection}>{textOrSummary(inputText)}</p>
+                          <p style={{ color: "#ffffff" }}>{textOrSummary(inputText)}</p>
                           {/* <p style={{ color: "#ffffff" }}>Selected text: {selectedText}</p> */}
                           <button className="Button" onClick={goBack}>Back</button>
                         </TabPanel>
@@ -251,8 +314,10 @@ function App() {
                               </div>))}
                           </div>
 
-                          <button className="Button" onClick={resetLinks}>Remove All Links</button>
+                          <button className="Button" id="copyArticleButton" onClick={copyText}>Copy Article</button>
+                          <button className="Button" onClick={downloadRTF}>Download Article</button>
                           <button className="Button" onClick={resetSelectedLink}>Remove Selected Link</button>
+                          <button className="Button" onClick={resetLinks}>Remove All Links</button>
                           <button className="Button" onClick={goBack}>Back</button>
                           <div
                             key={showResult ? "editor-active" : "editor-inactive"}
@@ -261,6 +326,7 @@ function App() {
                               minHeight: "100px",
                               width: "80%",
                               margin: "auto",
+                              marginBottom: "20px",
                               border: "1px solid #ccc",
                               borderRadius: "5px",
                               backgroundColor: "#d9d9d9",
