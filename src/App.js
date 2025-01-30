@@ -1,6 +1,6 @@
 import "./App.css";
 import axios from "axios";
-import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import "react-tabs/style/react-tabs.css";
 import Quill from "quill";
@@ -29,17 +29,17 @@ function copyURL(event) {
 }
 
 // Get user highlighted text to add a link to
-function getSelectionText() {
-  let text = "";
+// function getSelectionText() {
+//   let text = "";
 
-  if (window.getSelection) {
-    text = window.getSelection().toString();
-  } else if (document.selection && document.selection.type !== "Control") {
-    text = document.selection.createRange().text;
-  }
+//   if (window.getSelection) {
+//     text = window.getSelection().toString();
+//   } else if (document.selection && document.selection.type !== "Control") {
+//     text = document.selection.createRange().text;
+//   }
 
-  return text;
-}
+//   return text;
+// }
 
 function App() {
   const [inputText, setInputText] = useState("");
@@ -48,7 +48,7 @@ function App() {
   const [showResult, setShowResult] = useState(false);
   const [numResults, setNumResults] = useState(5);
   const [data, setData] = useState(null);
-  const [selectedText, setSelectedText] = useState("");
+  // const [selectedText, setSelectedText] = useState("");
   const [showError, setShowError] = useState(false);
   const [summary, setSummary] = useState(null);
   // const [editorReady, setEditorReady] = useState(false);
@@ -60,10 +60,10 @@ function App() {
     setActiveTab(i);
   };
 
-  const handleSelection = () => {
-    const text = getSelectionText();
-    setSelectedText(text);
-  };
+  // const handleSelection = () => {
+  //   const text = getSelectionText();
+  //   setSelectedText(text);
+  // };
 
   function sanitizeString(str) {
     str = str.replace(/[^a-z0-9áéíóúñü \\.,_-]/gim, "");
@@ -157,6 +157,41 @@ function App() {
     quill.formatText(0, length, "link", false);
   };
 
+  const copyText = () => {
+    const quill = quillRef.current;
+    const html = quill.root.innerHTML; // Get HTML with links
+  
+    // Create a temporary element to store the HTML
+    const tempElem = document.createElement("div");
+    tempElem.innerHTML = html;
+    document.body.appendChild(tempElem);
+  
+    // Use the Selection API to copy as rich text
+    const range = document.createRange();
+    range.selectNodeContents(tempElem);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+  
+    try {
+      document.execCommand("copy"); // Copy as rich text (HTML)
+    } catch (err) {
+      console.error("Copy failed:", err);
+    }
+  
+    // Clean up
+    document.body.removeChild(tempElem);
+    selection.removeAllRanges();
+  
+    // Update button text
+    const button = document.getElementById("copyArticleButton");
+    button.textContent = "Copied!";
+    setTimeout(() => {
+      button.textContent = "Copy Article";
+    }, 2000);
+  };
+  
+
 
   const resetSelectedLink = () => {
     const quill = quillRef.current;
@@ -207,7 +242,7 @@ function App() {
 
                         <TabPanel>
                           <p style={{ color: "#ffffff" }}>Your article has been summarised to:</p>
-                          <p style={{ color: "#ffffff" }} onMouseUp={handleSelection}>{textOrSummary(inputText)}</p>
+                          <p style={{ color: "#ffffff" }}>{textOrSummary(inputText)}</p>
                           {/* <p style={{ color: "#ffffff" }}>Selected text: {selectedText}</p> */}
                           <button className="Button" onClick={goBack}>Back</button>
                         </TabPanel>
@@ -251,6 +286,7 @@ function App() {
                               </div>))}
                           </div>
 
+                          <button className="Button" id="copyArticleButton" onClick={copyText}>Copy Article</button>
                           <button className="Button" onClick={resetLinks}>Remove All Links</button>
                           <button className="Button" onClick={resetSelectedLink}>Remove Selected Link</button>
                           <button className="Button" onClick={goBack}>Back</button>

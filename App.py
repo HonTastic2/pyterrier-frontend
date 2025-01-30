@@ -7,7 +7,7 @@ import shutil
 import os
 import sqlite3
 from dotenv import load_dotenv
-from openai import OpenAI
+from openai import OpenAI # type: ignore
 
 dataset = ir_datasets.load('wapo/v2/trec-news-2019')
 load_dotenv()
