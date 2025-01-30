@@ -50,7 +50,7 @@ function App() {
   const [data, setData] = useState(null);
   const [selectedText, setSelectedText] = useState("");
   const [showError, setShowError] = useState(false);
-  const [quillInitialized, setQuillInitialized] = useState(false);
+  const [summary, setSummary] = useState(null);
   // const [editorReady, setEditorReady] = useState(false);
   // const editorRef = useRef(null);
   const quillRef = useRef(null);
@@ -76,7 +76,7 @@ function App() {
     setActiveTab(0);
     axios
       .post("http://127.0.0.1:5000/api/data", { title: sanitizeString(inputTitle), body: sanitizeString(inputText), num_results: numResults, method: method })
-      .then((response) => { setData(response.data.result) })
+      .then((response) => { setData(response.data.result); if (response.data.summary) { setSummary(response.data.summary) }; console.log(response.data); })
       .catch((error) => { console.error("Error fetching data:", error); setShowResult(true); setActiveTab(0); setShowError(true) });
 
     // setEditorReady(true);
@@ -88,34 +88,39 @@ function App() {
     setData(null);
     setActiveTab(null);
     setShowError(false);
-    setQuillInitialized(false);
+    setSummary(null);
+    // setQuillInitialized(false);
     // setEditorReady(false);
     if (quillRef.current) {
       quillRef.current = null;
     }
   };
 
-  useLayoutEffect(() => {
-    // Initialize Quill only when the editor tab is active
-    if (activeTab === 0 && !quillRef.current) {
+  useEffect(() => {
+    const initializeQuill = () => {
       const editorElement = document.getElementById("editor");
-      if (editorElement) {
+      console.log(editorElement)
+      if (editorElement && !quillRef.current) {
         quillRef.current = new Quill(editorElement, {
           modules: { toolbar: false },
           theme: "snow",
         });
         quillRef.current.setText(inputText); // Initialize with text
-        setQuillInitialized(true);
+        // setQuillInitialized(true);
       }
+    };
+  
+    if (showResult) {
+      setTimeout(initializeQuill, 200); // Delay initialization to ensure DOM is updated
     }
 
     return () => {
       if (quillRef.current) {
         quillRef.current = null;
-        setQuillInitialized(false);
+        // setQuillInitialized(false);
       }
     };
-  }, [activeTab, inputText]);
+  }, [activeTab, showResult, inputText]);
 
 
 
@@ -168,6 +173,11 @@ function App() {
       .catch((error) => console.error("Error updating link:", error));
   };
 
+  const textOrSummary = (article) => {
+    if (summary) {return summary;}
+    else {return "If you choose to summarise your article, the terms will appear here.";}
+  }
+
   return (
     <div className="App">
       <header className="App-header">
@@ -189,11 +199,18 @@ function App() {
                   {data ? (
                     <>
                       <br />
-                      <Tabs selectedTabClassName="react-tabs__tab--selected" onSelect={(i) => handleTabSelect(i)} forceRenderTabPanel>
+                      <Tabs onSelect={(i) => handleTabSelect(i)} forceRenderTabPanel>
                         <TabList>
-                          <Tab>Input Document</Tab>
-                          <Tab>Table/Link Articles</Tab>
+                          <Tab id="tab0">Terms Summarised</Tab>
+                          <Tab id="tab1">Link Articles</Tab>
                         </TabList>
+
+                        <TabPanel>
+                          <p style={{ color: "#ffffff" }}>Your article has been summarised to:</p>
+                          <p style={{ color: "#ffffff" }} onMouseUp={handleSelection}>{textOrSummary(inputText)}</p>
+                          {/* <p style={{ color: "#ffffff" }}>Selected text: {selectedText}</p> */}
+                          <button className="Button" onClick={goBack}>Back</button>
+                        </TabPanel>
 
                         <TabPanel>
                           <div style={{ display: "grid", alignItems: "center", columnGap: 10, paddingLeft: "10%" }}>
@@ -226,7 +243,7 @@ function App() {
                                   Link
                                 </button>
 
-                                <a id={i} href={article[2]} style={{ color: "#44a9d8" }}>
+                                <a id={i} href={article[2]} style={{ color: "#44a9d8", alignItems: "left" }}>
                                   {article[1]}
                                 </a>
 
@@ -237,27 +254,20 @@ function App() {
                           <button className="Button" onClick={resetLinks}>Remove All Links</button>
                           <button className="Button" onClick={resetSelectedLink}>Remove Selected Link</button>
                           <button className="Button" onClick={goBack}>Back</button>
-                          {showResult && (
-                            <div
-                              key={activeTab === 0 ? "editor-active" : "editor-inactive"}
-                              id="editor"
-                              style={{
-                                minHeight: "100px",
-                                width: "80%",
-                                margin: "auto",
-                                border: "1px solid #ccc",
-                                borderRadius: "5px",
-                                backgroundColor: "#d9d9d9",
-                              }}
-                            />
-                          )}
+                          <div
+                            key={showResult ? "editor-active" : "editor-inactive"}
+                            id="editor"
+                            style={{
+                              minHeight: "100px",
+                              width: "80%",
+                              margin: "auto",
+                              border: "1px solid #ccc",
+                              borderRadius: "5px",
+                              backgroundColor: "#d9d9d9",
+                            }}
+                          ></div>
                         </TabPanel>
 
-                        <TabPanel>
-                          <p onMouseUp={handleSelection}>{inputText}</p>
-                          <p>Selected text: {selectedText}</p>
-                          <button className="Button" onClick={goBack}>Back</button>
-                        </TabPanel>
 
                       </Tabs>
                     </>
@@ -295,6 +305,7 @@ function App() {
                 <span style={{ color: "#ffffff" }}>Number of results:{" "}</span>
                 <select
                   value={numResults}
+                  style={{ borderRadius: "5px" }}
                   onChange={(e) => setNumResults(parseInt(e.target.value))}>
                   <option value={1}>1</option>
                   <option value={2}>2</option>
@@ -310,10 +321,13 @@ function App() {
                 <span style={{ color: "#ffffff" }}>&nbsp;Search method:&nbsp;</span>
                 <select
                   value={method}
+                  style={{ borderRadius: "5px" }}
                   onChange={(e) => setMethod(e.target.value)}>
                   <option value={"title"}>Title only</option>
                   <option value={"titlebody"}>Title + Body</option>
                   <option value={"body"}>Body only</option>
+                  <option value={"llm"}>LLM Summarisation</option>
+                  <option value={"mct"}>Most Common Terms</option>
                 </select>
                 <button className="Button" onClick={handleSearch}>
                   Search
