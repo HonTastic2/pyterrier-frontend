@@ -50,7 +50,7 @@ function App() {
   const [data, setData] = useState(null);
   const [selectedText, setSelectedText] = useState("");
   const [showError, setShowError] = useState(false);
-  const [quillInitialized, setQuillInitialized] = useState(false);
+  const [summary, setSummary] = useState(null);
   // const [editorReady, setEditorReady] = useState(false);
   // const editorRef = useRef(null);
   const quillRef = useRef(null);
@@ -76,7 +76,7 @@ function App() {
     setActiveTab(0);
     axios
       .post("http://127.0.0.1:5000/api/data", { title: sanitizeString(inputTitle), body: sanitizeString(inputText), num_results: numResults, method: method })
-      .then((response) => { setData(response.data.result); console.log(response.data.summary); })
+      .then((response) => { setData(response.data.result); if (response.data.summary) { setSummary(response.data.summary) }; console.log(response.data); })
       .catch((error) => { console.error("Error fetching data:", error); setShowResult(true); setActiveTab(0); setShowError(true) });
 
     // setEditorReady(true);
@@ -88,7 +88,8 @@ function App() {
     setData(null);
     setActiveTab(null);
     setShowError(false);
-    setQuillInitialized(false);
+    setSummary(null);
+    // setQuillInitialized(false);
     // setEditorReady(false);
     if (quillRef.current) {
       quillRef.current = null;
@@ -105,7 +106,7 @@ function App() {
           theme: "snow",
         });
         quillRef.current.setText(inputText); // Initialize with text
-        setQuillInitialized(true);
+        // setQuillInitialized(true);
       }
     };
   
@@ -116,7 +117,7 @@ function App() {
     return () => {
       if (quillRef.current) {
         quillRef.current = null;
-        setQuillInitialized(false);
+        // setQuillInitialized(false);
       }
     };
   }, [activeTab, showResult, inputText]);
@@ -172,6 +173,11 @@ function App() {
       .catch((error) => console.error("Error updating link:", error));
   };
 
+  const textOrSummary = (article) => {
+    if (summary) {return summary;}
+    else {return "If you choose to summarise your article, the terms will appear here.";}
+  }
+
   return (
     <div className="App">
       <header className="App-header">
@@ -195,9 +201,16 @@ function App() {
                       <br />
                       <Tabs onSelect={(i) => handleTabSelect(i)} forceRenderTabPanel>
                         <TabList>
-                          <Tab id="tab0">Input Document</Tab>
-                          <Tab id="tab1">Table/Link Articles</Tab>
+                          <Tab id="tab0">Terms Summarised</Tab>
+                          <Tab id="tab1">Link Articles</Tab>
                         </TabList>
+
+                        <TabPanel>
+                          <p style={{ color: "#ffffff" }}>Your article has been summarised to:</p>
+                          <p style={{ color: "#ffffff" }} onMouseUp={handleSelection}>{textOrSummary(inputText)}</p>
+                          {/* <p style={{ color: "#ffffff" }}>Selected text: {selectedText}</p> */}
+                          <button className="Button" onClick={goBack}>Back</button>
+                        </TabPanel>
 
                         <TabPanel>
                           <div style={{ display: "grid", alignItems: "center", columnGap: 10, paddingLeft: "10%" }}>
@@ -230,7 +243,7 @@ function App() {
                                   Link
                                 </button>
 
-                                <a id={i} href={article[2]} style={{ color: "#44a9d8" }}>
+                                <a id={i} href={article[2]} style={{ color: "#44a9d8", alignItems: "left" }}>
                                   {article[1]}
                                 </a>
 
@@ -255,11 +268,6 @@ function App() {
                           ></div>
                         </TabPanel>
 
-                        <TabPanel>
-                          <p style={{ color: "#ffffff" }} onMouseUp={handleSelection}>{inputText}</p>
-                          <p style={{ color: "#ffffff" }}>Selected text: {selectedText}</p>
-                          <button className="Button" onClick={goBack}>Back</button>
-                        </TabPanel>
 
                       </Tabs>
                     </>
@@ -318,6 +326,8 @@ function App() {
                   <option value={"title"}>Title only</option>
                   <option value={"titlebody"}>Title + Body</option>
                   <option value={"body"}>Body only</option>
+                  <option value={"llm"}>LLM Summarisation</option>
+                  <option value={"mct"}>Most Common Terms</option>
                 </select>
                 <button className="Button" onClick={handleSearch}>
                   Search

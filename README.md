@@ -7,4 +7,4 @@ made a `Dockerfile` and `requirements.txt` file. You can just run the command `d
 you have docker open) to create a container called "backend" which can then be run using `docker run -p 5000:5000 -v C:\Users\2002h\Desktop\Project\pyterrier-frontend\ir_datasets:/root/.ir_datasets -v C:\Users\2002h\Desktop\Project\pyterrier-frontend\App.py:/app/App.py backend` on port 5000. I have downloaded the WashingtonPost.v2 dataset, so if you are running this on a different machine then replace the directory before the colon with wherever your WashingtonPost.v2.tar.gz file is
 
 # Llama API
-If using the LLM summarisation option, you will need to acquire a Llama API Key following the steps from this website: https://docs.llama-api.com/api-token. Once you have obtained one, create a `.env` file in the root and add the line `LLAMA_API_KEY="YOUR TOKEN HERE"`.
+If using the LLM summarisation option, you will need to acquire an Openrouter API Key following the steps from this website: https://openrouter.ai/settings/keys. Once you have obtained one, create a `.env` file in the root and add the line `OPENAI_API_KEY="YOUR TOKEN HERE"`.
