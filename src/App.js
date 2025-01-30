@@ -159,7 +159,7 @@ function App() {
 
   const copyText = () => {
     const quill = quillRef.current;
-    const html = quill.root.innerHTML; // Get HTML with links
+    const html = quill.root.innerHTML;
   
     // Create a temporary element to store the HTML
     const tempElem = document.createElement("div");
@@ -174,22 +174,50 @@ function App() {
     selection.addRange(range);
   
     try {
-      document.execCommand("copy"); // Copy as rich text (HTML)
+      document.execCommand("copy");
     } catch (err) {
       console.error("Copy failed:", err);
     }
   
-    // Clean up
     document.body.removeChild(tempElem);
     selection.removeAllRanges();
   
-    // Update button text
     const button = document.getElementById("copyArticleButton");
     button.textContent = "Copied!";
     setTimeout(() => {
       button.textContent = "Copy Article";
     }, 2000);
   };
+
+  const downloadRTF = () => {
+    const quill = quillRef.current;
+    const html = quill.root.innerHTML;
+    const rtfContent = htmlToRtf(html);
+  
+    // Create a Blob and download as .rtf file
+    const blob = new Blob([rtfContent], { type: "application/rtf" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "article.rtf";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+  
+  const htmlToRtf = (html) => {
+    return (
+      "{\\rtf1\\ansi\\deff0 " +
+      html
+        .replace(/<b>(.*?)<\/b>/g, "{\\b $1}") // Bold
+        .replace(/<i>(.*?)<\/i>/g, "{\\i $1}") // Italics
+        .replace(/<u>(.*?)<\/u>/g, "{\\ul $1}") // Underline
+        .replace(/<a href="(.*?)">(.*?)<\/a>/g, "{\\field{\\*\\fldinst HYPERLINK \"$1\"}{\\fldrslt $2}}") // Preserve links
+        .replace(/<br\s*\/?>/g, "\\line ") // New lines
+        .replace(/<\/?[^>]+(>|$)/g, "") + // Remove other HTML tags
+      "}"
+    );
+  };
+  
   
 
 
@@ -287,8 +315,9 @@ function App() {
                           </div>
 
                           <button className="Button" id="copyArticleButton" onClick={copyText}>Copy Article</button>
-                          <button className="Button" onClick={resetLinks}>Remove All Links</button>
+                          <button className="Button" onClick={downloadRTF}>Download Article</button>
                           <button className="Button" onClick={resetSelectedLink}>Remove Selected Link</button>
+                          <button className="Button" onClick={resetLinks}>Remove All Links</button>
                           <button className="Button" onClick={goBack}>Back</button>
                           <div
                             key={showResult ? "editor-active" : "editor-inactive"}
