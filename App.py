@@ -85,7 +85,8 @@ def run_split_query(retriever, query):
         res = retriever.transform(pd.DataFrame([{"qid":"1", "query": subquery_str}]))
         results.append(res)
 
-    return pd.concat(results, ignore_index=True)
+    result = pd.concat(results, ignore_index=True)
+    return result.drop_duplicates(subset="docid")
 
 def most_common_terms(query, n=20):
     query_toks = query.split()
